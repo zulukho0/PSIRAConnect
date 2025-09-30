@@ -1,6 +1,9 @@
 from django.db import models
 from courses.models import Course
 from students.models import Student
+import random
+import string
+
 
 # Create your models here.
 class Class(models.Model):
