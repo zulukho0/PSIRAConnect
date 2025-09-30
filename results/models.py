@@ -45,15 +45,23 @@ class SubjectResult(models.Model):
     total_marks = models.IntegerField(default=0)
 
     def save(self, *args, **kwargs):
-        # Correct formula: average of theory & practical (both already in %)
+        # Case 1: both theory and practical are provided
         if self.theory_marks is not None and self.practical_marks is not None:
-            self.total_marks = math.ceil((self.theory_marks + self.practical_marks) / 2)
-        super().save(*args, **kwargs)
-        # Update parent Result totals and average
-        self.result.calculate_totals()
+            if self.theory_marks > 0 and self.practical_marks > 0:
+                self.total_marks = math.ceil((self.theory_marks + self.practical_marks) / 2)
+            elif self.theory_marks > 0:
+                self.total_marks = math.ceil(self.theory_marks)
+            elif self.practical_marks > 0:
+                self.total_marks = math.ceil(self.practical_marks)
+            else:
+                self.total_marks = 0
+        else:
+            # default if both are None
+            self.total_marks = 0
 
-    def __str__(self):
-        return f"{self.result.student} - {self.template.name}"
+        super().save(*args, **kwargs)
+        # Update parent result totals
+        self.result.calculate_totals()
 
 
 # Auto-create SubjectResults after a Result is created
