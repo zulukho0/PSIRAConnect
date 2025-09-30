@@ -9,14 +9,9 @@ class CourseAdmin(admin.ModelAdmin):
         'grade', 
         'description',
         'price', 
-        'start_date', 
-        'end_date', 
         'created_at', 
         'updated_at'
     )
 
     # Fields you can search by
     search_fields = ('grade',)
-
-    # Optional: filter by start date
-    list_filter = ('start_date',)
