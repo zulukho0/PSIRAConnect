@@ -2,6 +2,7 @@ from django.contrib import admin
 from .models import Result, SubjectResult
 
 # Register your models here.
+# Inline to edit SubjectResults inside a Result
 class SubjectResultInline(admin.TabularInline):
     model = SubjectResult
     extra = 0
