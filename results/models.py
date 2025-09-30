@@ -2,6 +2,8 @@ from django.db import models
 from students.models import Student
 from classes.models import Class
 from courses.models import SubjectTemplate
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 # Create your models here.
 STATUS_CHOICES = [
@@ -38,11 +40,22 @@ class SubjectResult(models.Model):
     total_marks = models.IntegerField(default=0)
 
     def save(self, *args, **kwargs):
-        # Auto-calculate total marks
-        self.total_marks = self.theory_marks + self.practical_marks
+        # Correct formula: average of theory & practical (both already in %)
+        if self.theory_marks is not None and self.practical_marks is not None:
+            self.total_marks = (self.theory_marks + self.practical_marks) / 2
         super().save(*args, **kwargs)
         # Update parent Result totals and average
         self.result.calculate_totals()
 
     def __str__(self):
         return f"{self.result.student} - {self.template.name}"
+
+
+# Auto-create SubjectResults after a Result is created
+@receiver(post_save, sender='results.Result')
+def create_subjects_for_result(sender, instance, created, **kwargs):
+    if created:
+        templates = instance.class_instance.course.subjects.all()
+        for template in templates:
+            instance.subjects.create(template=template)
+
