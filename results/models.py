@@ -1,3 +1,4 @@
+import math
 from django.db import models
 from students.models import Student
 from classes.models import Class
@@ -15,7 +16,7 @@ class Result(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='results')
     class_instance = models.ForeignKey(Class, on_delete=models.CASCADE, related_name='results')
     total_marks = models.IntegerField(default=0)
-    average = models.FloatField(default=0.0)
+    average = models.IntegerField(default=0)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='Pending')
     report_file = models.FileField(upload_to='reports/', null=True, blank=True)
     submitted_at = models.DateTimeField(null=True, blank=True)
@@ -27,10 +28,14 @@ class Result(models.Model):
 
     def calculate_totals(self):
         subjects = self.subjects.all()
-        total = sum([s.total_marks for s in subjects])
-        self.total_marks = total
-        self.average = total / len(subjects) if subjects else 0
-        self.save()
+        if subjects.exists():
+            total = sum([s.total_marks for s in subjects])
+            self.total_marks = math.ceil(total)
+            self.average = math.ceil(total / subjects.count())
+        else:
+            self.total_marks = 0
+            self.average = 0
+        self.save(update_fields=['total_marks', 'average'])
 
 class SubjectResult(models.Model):
     result = models.ForeignKey(Result, on_delete=models.CASCADE, related_name='subjects')
@@ -42,7 +47,7 @@ class SubjectResult(models.Model):
     def save(self, *args, **kwargs):
         # Correct formula: average of theory & practical (both already in %)
         if self.theory_marks is not None and self.practical_marks is not None:
-            self.total_marks = (self.theory_marks + self.practical_marks) / 2
+            self.total_marks = math.ceil((self.theory_marks + self.practical_marks) / 2)
         super().save(*args, **kwargs)
         # Update parent Result totals and average
         self.result.calculate_totals()
