@@ -13,8 +13,10 @@ class ResultAdmin(admin.ModelAdmin):
     inlines = [SubjectResultInline]
     list_filter = ('status', 'class_instance__course')
     search_fields = ('student__first_name', 'student__last_name', 'class_instance__batch_number')
+    readonly_fields = ('total_marks', 'average')
 
 @admin.register(SubjectResult)
 class SubjectResultAdmin(admin.ModelAdmin):
     list_display = ('result', 'template', 'theory_marks', 'practical_marks', 'total_marks')
     search_fields = ('result__student__first_name', 'result__student__last_name', 'template__name')
+    readonly_fields = ('total_marks',)
