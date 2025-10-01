@@ -58,15 +58,10 @@
     <h2>Grade {{ result.class_instance.course.grade }}</h2>
 
     <div class="info">
-        <div><strong>Student:</strong> {{ result.student.first_name }} {{ result.student.last_name }} (ID: {{
-            result.student.id_number }})</div>
-        <div><strong>Class:</strong> {{ result.class_instance.course.grade }} - Batch {{
-            result.class_instance.batch_number }}</div>
-        <div><strong>Instructor:</strong> {{ result.class_instance.instructor.first_name }} {{
-            result.class_instance.instructor.last_name }} | PSIRA #: {{ result.class_instance.instructor.psira_number }}
-        </div>
-        <div><strong>Period:</strong> {{ result.class_instance.start_date }} to {{ result.class_instance.end_date }}
-        </div>
+        <div><strong>Student:</strong> {{ result.student.first_name }} {{ result.student.last_name }} (ID: {{ result.student.id_number }})</div>
+        <div><strong>Class:</strong> {{ result.class_instance.course.grade }} - Batch {{ result.class_instance.batch_number }}</div>
+        <div><strong>Instructor:</strong> {{ result.class_instance.instructor.first_name }} {{ result.class_instance.instructor.last_name }} | PSIRA #: {{ result.class_instance.instructor.psira_number }}</div>
+        <div><strong>Period:</strong> {{ result.class_instance.start_date }} to {{ result.class_instance.end_date }}</div>
     </div>
 
     <table>
@@ -104,7 +99,7 @@
         <p>Instructor: {{ instructor.first_name }} {{ instructor.last_name }}</p>
         <p>PSIRA #: {{ instructor.psira_number }}</p>
         {% if instructor.signature %}
-        <img src="{{ instructor.signature.url }}" alt="Instructor signature">
+        <img src="{{ instructor.signature.path }}" alt="Instructor signature">
         {% endif %}
     </div>
 
