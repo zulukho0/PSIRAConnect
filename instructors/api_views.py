@@ -1,7 +1,7 @@
-from rest_framework import serializers
+from rest_framework import viewsets
 from .models import Instructor
+from .serializers import InstructorSerializer
 
-class InstructorSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Instructor
-        fields = ['id', 'first_name', 'last_name', 'psira_number', 'contact_number', 'signature']
+class InstructorViewSet(viewsets.ModelViewSet):
+    queryset = Instructor.objects.all()
+    serializer_class = InstructorSerializer
