@@ -1,6 +1,7 @@
 from django.db import models
 from courses.models import Course
 from students.models import Student
+from instructors.models import Instructor
 import random
 import string
 
@@ -10,6 +11,7 @@ class Class(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
     course_number = models.CharField(max_length=50, null=True, blank=True)
     batch_number = models.CharField(max_length=20, unique=True, blank=True)
+    instructor = models.ForeignKey(Instructor, on_delete=models.CASCADE, null=True, blank=True)
     start_date = models.DateField()
     end_date = models.DateField(blank=True)
     students = models.ManyToManyField(Student, related_name='classes')

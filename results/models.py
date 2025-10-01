@@ -1,5 +1,4 @@
 from django.db import models
-from django.utils import timezone
 from students.models import Student
 from classes.models import Class
 from courses.models import SubjectTemplate
@@ -8,8 +7,8 @@ from django.dispatch import receiver
 from decimal import Decimal, ROUND_HALF_UP
 from django.template.loader import render_to_string
 from weasyprint import HTML
-from django.core.files.base import ContentFile
-import io
+import os
+from django.conf import settings
 
 STATUS_CHOICES = [
     ('Pending', 'Pending'),
@@ -41,31 +40,19 @@ class Result(models.Model):
         else:
             self.average = 0
 
+        # Only save totals/average, do not generate PDF here
         self.save(update_fields=['total_marks', 'average'])
 
     def generate_pdf(self):
-        """Generate PDF and save to report_file"""
-        subjects = self.subjects.all()
-        html_string = render_to_string('results/result_report.html', {
-            'result': self,
-            'subjects': subjects,
-        })
+        """Generate PDF report once all subjects are saved."""
+        html_string = render_to_string('results/report_template.html', {'result': self})
+        pdf_file_path = os.path.join('reports', f'result_{self.id}.pdf')
+        full_path = os.path.join(settings.MEDIA_ROOT, pdf_file_path)
 
-        pdf_file = io.BytesIO()
-        HTML(string=html_string).write_pdf(pdf_file)
+        HTML(string=html_string).write_pdf(target=full_path)
 
-        self.report_file.save(
-            f"Result_{self.student.id}_{self.class_instance.batch_number}.pdf",
-            ContentFile(pdf_file.getvalue()),
-            save=True
-        )
-
-    def submit(self):
-        """Mark the result as submitted and generate PDF"""
-        self.status = 'Submitted'
-        self.submitted_at = timezone.now()
-        self.generate_pdf()
-        self.save(update_fields=['status', 'submitted_at', 'report_file'])
+        self.report_file.name = pdf_file_path
+        self.save(update_fields=['report_file'])
 
 
 class SubjectResult(models.Model):
@@ -76,11 +63,10 @@ class SubjectResult(models.Model):
     total_marks = models.IntegerField(default=0)
 
     def save(self, *args, **kwargs):
-        # Handle cases where either theory or practical is missing
         theory = Decimal(str(self.theory_marks)) if self.theory_marks is not None else None
         practical = Decimal(str(self.practical_marks)) if self.practical_marks is not None else None
 
-        if theory is not None and practical is not None:
+        if theory and practical:
             if theory > 0 and practical > 0:
                 self.total_marks = int(((theory + practical) / 2).to_integral_value(rounding=ROUND_HALF_UP))
             elif theory > 0:
@@ -89,21 +75,16 @@ class SubjectResult(models.Model):
                 self.total_marks = int(practical.to_integral_value(rounding=ROUND_HALF_UP))
             else:
                 self.total_marks = 0
-        elif theory is not None:
+        elif theory:
             self.total_marks = int(theory.to_integral_value(rounding=ROUND_HALF_UP))
-        elif practical is not None:
+        elif practical:
             self.total_marks = int(practical.to_integral_value(rounding=ROUND_HALF_UP))
         else:
             self.total_marks = 0
 
         super().save(*args, **kwargs)
-        # Recalculate Result totals after saving subject
+        # Update totals & average, but do NOT generate PDF here
         self.result.calculate_totals()
-        # Optional: regenerate PDF immediately after marks update
-        self.result.generate_pdf()
-
-    def __str__(self):
-        return f"{self.result.student} - {self.template.name}"
 
 
 # Auto-create SubjectResults after a Result is created
@@ -113,5 +94,3 @@ def create_subjects_for_result(sender, instance, created, **kwargs):
         templates = instance.class_instance.course.subjects.all()
         for template in templates:
             instance.subjects.create(template=template)
-        # Generate initial PDF after creating subjects
-        instance.generate_pdf()
