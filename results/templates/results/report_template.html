@@ -12,6 +12,7 @@
         .info { margin-bottom: 20px; }
         .info div { margin: 4px 0; }
         .signature { margin-top: 50px; text-align: right; }
+        .signature img { max-width: 200px; height: auto; }
     </style>
 </head>
 <body>
@@ -58,7 +59,12 @@
 </table>
 
 <div class="signature">
-    ___________________________<br>
+    {% if result.class_instance.instructor.signature %}
+        <img src="{{ result.class_instance.instructor.signature.url }}" alt="Instructor Signature">
+    {% else %}
+        ___________________________
+    {% endif %}
+    <br>
     Instructor Signature
 </div>
 

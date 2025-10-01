@@ -44,14 +44,22 @@ class Result(models.Model):
         self.save(update_fields=['total_marks', 'average'])
 
     def generate_pdf(self):
-        """Generate PDF report once all subjects are saved."""
+        # Render HTML template
         html_string = render_to_string('results/report_template.html', {'result': self})
-        pdf_file_path = os.path.join('reports', f'result_{self.id}.pdf')
-        full_path = os.path.join(settings.MEDIA_ROOT, pdf_file_path)
 
+        # Make sure the directory exists
+        reports_dir = os.path.join(settings.MEDIA_ROOT, 'reports')
+        os.makedirs(reports_dir, exist_ok=True)  # <-- creates folder if missing
+
+        # PDF filename
+        file_name = f'result_{self.id}.pdf'
+        full_path = os.path.join(reports_dir, file_name)
+
+        # Generate PDF
         HTML(string=html_string).write_pdf(target=full_path)
 
-        self.report_file.name = pdf_file_path
+        # Save path to model
+        self.report_file.name = f'reports/{file_name}'
         self.save(update_fields=['report_file'])
 
 
