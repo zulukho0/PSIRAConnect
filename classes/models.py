@@ -2,6 +2,7 @@ from django.db import models
 from courses.models import Course
 from students.models import Student
 from instructors.models import Instructor
+from datetime import timedelta
 import random
 import string
 
