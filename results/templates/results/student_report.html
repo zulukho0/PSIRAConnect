@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Report - {{ student.first_name }} {{ student.last_name }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1, h2 { text-align: center; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        th { background-color: #f2f2f2; }
+        tfoot { font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>PSIRAConnect Training Report</h1>
+    <h2>Grade {{ course.grade }} | Batch: {{ class_instance.batch_number }}</h2>
+    <p><strong>Student:</strong> {{ student.first_name }} {{ student.last_name }}</p>
+    <p><strong>ID Number:</strong> {{ student.id_number }}</p>
+    <p><strong>Course:</strong> {{ course.grade }} - {{ course.description }}</p>
+    <p><strong>Class Dates:</strong> {{ class_instance.start_date }} to {{ class_instance.end_date }}</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Subject</th>
+                <th>Theory (%)</th>
+                <th>Practical (%)</th>
+                <th>Total (%)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for subject in subject_results %}
+            <tr>
+                <td>{{ subject.template.name }}</td>
+                <td>{{ subject.theory_marks|default:"-" }}</td>
+                <td>{{ subject.practical_marks|default:"-" }}</td>
+                <td>{{ subject.total_marks }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="3">Total Marks</td>
+                <td>{{ result.total_marks }}</td>
+            </tr>
+            <tr>
+                <td colspan="3">Average (%)</td>
+                <td>{{ result.average }}</td>
+            </tr>
+        </tfoot>
+    </table>
+</body>
+</html>
