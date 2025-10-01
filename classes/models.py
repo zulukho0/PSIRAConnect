@@ -11,7 +11,7 @@ class Class(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
     course_number = models.CharField(max_length=50, null=True, blank=True)
     batch_number = models.CharField(max_length=20, unique=True, blank=True)
-    instructor = models.ForeignKey(Instructor, on_delete=models.CASCADE, null=True, blank=True)
+    instructor = models.ForeignKey(Instructor, on_delete=models.SET_NULL, null=True, blank=True)
     start_date = models.DateField()
     end_date = models.DateField(blank=True)
     students = models.ManyToManyField(Student, related_name='classes')
