@@ -15,5 +15,5 @@ router.register(r'results', ResultViewSet)
 router.register(r'instructors', InstructorViewSet)
 
 urlpatterns = [
-    path('v1/', include(router.urls)),
+    path('', include(router.urls)),
 ]
