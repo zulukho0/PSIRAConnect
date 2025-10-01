@@ -1,10 +1,15 @@
 from django.db import models
+from django.utils import timezone
 from students.models import Student
 from classes.models import Class
 from courses.models import SubjectTemplate
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from decimal import Decimal, ROUND_HALF_UP
+from django.template.loader import render_to_string
+from weasyprint import HTML
+from django.core.files.base import ContentFile
+import io
 
 STATUS_CHOICES = [
     ('Pending', 'Pending'),
@@ -38,6 +43,30 @@ class Result(models.Model):
 
         self.save(update_fields=['total_marks', 'average'])
 
+    def generate_pdf(self):
+        """Generate PDF and save to report_file"""
+        subjects = self.subjects.all()
+        html_string = render_to_string('results/result_report.html', {
+            'result': self,
+            'subjects': subjects,
+        })
+
+        pdf_file = io.BytesIO()
+        HTML(string=html_string).write_pdf(pdf_file)
+
+        self.report_file.save(
+            f"Result_{self.student.id}_{self.class_instance.batch_number}.pdf",
+            ContentFile(pdf_file.getvalue()),
+            save=True
+        )
+
+    def submit(self):
+        """Mark the result as submitted and generate PDF"""
+        self.status = 'Submitted'
+        self.submitted_at = timezone.now()
+        self.generate_pdf()
+        self.save(update_fields=['status', 'submitted_at', 'report_file'])
+
 
 class SubjectResult(models.Model):
     result = models.ForeignKey(Result, on_delete=models.CASCADE, related_name='subjects')
@@ -47,10 +76,11 @@ class SubjectResult(models.Model):
     total_marks = models.IntegerField(default=0)
 
     def save(self, *args, **kwargs):
+        # Handle cases where either theory or practical is missing
         theory = Decimal(str(self.theory_marks)) if self.theory_marks is not None else None
         practical = Decimal(str(self.practical_marks)) if self.practical_marks is not None else None
 
-        if theory and practical:
+        if theory is not None and practical is not None:
             if theory > 0 and practical > 0:
                 self.total_marks = int(((theory + practical) / 2).to_integral_value(rounding=ROUND_HALF_UP))
             elif theory > 0:
@@ -59,15 +89,18 @@ class SubjectResult(models.Model):
                 self.total_marks = int(practical.to_integral_value(rounding=ROUND_HALF_UP))
             else:
                 self.total_marks = 0
-        elif theory:
+        elif theory is not None:
             self.total_marks = int(theory.to_integral_value(rounding=ROUND_HALF_UP))
-        elif practical:
+        elif practical is not None:
             self.total_marks = int(practical.to_integral_value(rounding=ROUND_HALF_UP))
         else:
             self.total_marks = 0
 
         super().save(*args, **kwargs)
+        # Recalculate Result totals after saving subject
         self.result.calculate_totals()
+        # Optional: regenerate PDF immediately after marks update
+        self.result.generate_pdf()
 
     def __str__(self):
         return f"{self.result.student} - {self.template.name}"
@@ -80,3 +113,5 @@ def create_subjects_for_result(sender, instance, created, **kwargs):
         templates = instance.class_instance.course.subjects.all()
         for template in templates:
             instance.subjects.create(template=template)
+        # Generate initial PDF after creating subjects
+        instance.generate_pdf()
