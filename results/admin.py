@@ -6,14 +6,17 @@ from .models import Result, SubjectResult
 class SubjectResultInline(admin.TabularInline):
     model = SubjectResult
     extra = 0
+    fields = ('template', 'theory_marks', 'practical_marks', 'total_marks')
+    readonly_fields = ('total_marks',)  # auto-calculated
+    can_delete = False
 
 @admin.register(Result)
 class ResultAdmin(admin.ModelAdmin):
     list_display = ('student', 'class_instance', 'total_marks', 'average', 'status', 'submitted_at')
+    list_filter = ('status', 'class_instance__course__grade')
+    search_fields = ('student__first_name', 'student__last_name', 'student__id_number')
+    readonly_fields = ('total_marks', 'average', 'report_file', 'created_at', 'updated_at')
     inlines = [SubjectResultInline]
-    list_filter = ('status', 'class_instance__course')
-    search_fields = ('student__first_name', 'student__last_name', 'class_instance__batch_number')
-    readonly_fields = ('total_marks', 'average')
 
 @admin.register(SubjectResult)
 class SubjectResultAdmin(admin.ModelAdmin):
