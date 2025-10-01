@@ -9,6 +9,7 @@ from django.template.loader import render_to_string
 from weasyprint import HTML
 import os
 from django.conf import settings
+from pathlib import Path
 
 STATUS_CHOICES = [
     ('Pending', 'Pending'),
@@ -55,6 +56,13 @@ class Result(models.Model):
             }
         )
 
+        # Convert Windows paths to file:// URLs for WeasyPrint
+        # This fixes the issue where images don't show in PDFs on Windows
+        if instructor and instructor.signature:
+            signature_path = Path(instructor.signature.path).as_posix()
+            file_url = f"file:///{signature_path}"
+            html_string = html_string.replace(instructor.signature.path, file_url)
+
         # Make sure the directory exists
         reports_dir = os.path.join(settings.MEDIA_ROOT, 'reports')
         os.makedirs(reports_dir, exist_ok=True)
@@ -63,8 +71,8 @@ class Result(models.Model):
         file_name = f'result_{self.id}.pdf'
         full_path = os.path.join(reports_dir, file_name)
 
-        # Generate PDF with base_url to resolve media files
-        HTML(string=html_string, base_url=settings.MEDIA_ROOT).write_pdf(target=full_path)
+        # Generate PDF - base_url helps resolve relative paths
+        HTML(string=html_string).write_pdf(target=full_path)
 
         # Save path to model
         self.report_file.name = f'reports/{file_name}'
