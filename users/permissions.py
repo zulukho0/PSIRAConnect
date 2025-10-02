@@ -57,8 +57,12 @@ class RolePermission(permissions.BasePermission):
         if not request.user or not request.user.is_authenticated:
             return False
 
-        app_name = view.basename  # e.g., "students", "results"
-        action = view.action       # e.g., "list", "create"
+        # Allow superusers full access
+        if getattr(request.user, 'is_superuser', False):
+            return True
+
+        app_name = view.basename
+        action = view.action
         user_role = getattr(request.user, "role", None)
 
         allowed_roles = self.ROLE_PERMISSIONS.get(app_name, {}).get(action, [])

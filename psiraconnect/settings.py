@@ -154,3 +154,26 @@ REST_FRAMEWORK = {
 
 #Declare custom usermodel
 AUTH_USER_MODEL = 'users.CustomUser'
+
+# Logging configuration for debugging
+# Enables debug-level output to the console for the users.permissions logger
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'DEBUG',
+    },
+    'loggers': {
+        'users.permissions': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+    },
+}
