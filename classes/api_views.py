@@ -11,37 +11,22 @@ class ClassViewSet(viewsets.ModelViewSet):
     serializer_class = ClassSerializer
     permission_classes = [RolePermission]
 
-
-# Add a single student
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=['post'], url_path='add_student')
     def add_student(self, request, pk=None):
         class_instance = self.get_object()
         student_id = request.data.get('student_id')
+
         if not student_id:
             return Response({"detail": "student_id is required"}, status=status.HTTP_400_BAD_REQUEST)
-
+        
         try:
             student = Student.objects.get(id=student_id)
         except Student.DoesNotExist:
             return Response({"detail": "Student not found"}, status=status.HTTP_404_NOT_FOUND)
-
+        
         class_instance.students.add(student)
         class_instance.save()
-        return Response({"detail": f"Student {student.first_name} added"}, status=status.HTTP_200_OK)
-
-    # Remove a single student
-    @action(detail=True, methods=['post'])
-    def remove_student(self, request, pk=None):
-        class_instance = self.get_object()
-        student_id = request.data.get('student_id')
-        if not student_id:
-            return Response({"detail": "student_id is required"}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            student = Student.objects.get(id=student_id)
-        except Student.DoesNotExist:
-            return Response({"detail": "Student not found"}, status=status.HTTP_404_NOT_FOUND)
-
-        class_instance.students.remove(student)
-        class_instance.save()
-        return Response({"detail": f"Student {student.first_name} removed"}, status=status.HTTP_200_OK)
+        
+        # Return the updated class including all students
+        serializer = ClassSerializer(class_instance)
+        return Response(serializer.data, status=status.HTTP_200_OK)
