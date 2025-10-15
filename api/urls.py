@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework import routers
 from students.api_views import StudentViewSet
-from courses.api_views import CourseViewSet
+from courses.api_views import CourseViewSet, SubjectTemplateViewSet
 from classes.api_views import ClassViewSet
 from results.api_views import ResultViewSet
 from instructors.api_views import InstructorViewSet
@@ -9,6 +9,7 @@ from instructors.api_views import InstructorViewSet
 router = routers.DefaultRouter()
 router.register(r'students', StudentViewSet)
 router.register(r'courses', CourseViewSet)
+router.register(r'subjects', SubjectTemplateViewSet)
 router.register(r'classes', ClassViewSet)
 router.register(r'results', ResultViewSet)
 # router.register(r'reports', ReportViewSet)
